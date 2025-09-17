@@ -11,7 +11,7 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-use core::ffi::c_char;
+use core::ffi::{c_char, c_uchar, c_uint};
 
 use mw_log::{Level, LevelFilter};
 
@@ -19,6 +19,10 @@ use mw_log::{Level, LevelFilter};
 #[repr(C)]
 pub(crate) struct Logger {
     _private: [u8; 0], // Opaque
+}
+#[repr(C)]
+pub struct LogStreamHandle {
+    _private: [u8; 0],
 }
 
 pub(crate) fn mw_log_logger_level(logger: *const Logger) -> LevelFilter {
@@ -51,16 +55,132 @@ fn log_level_from_ffi(level: u8) -> LevelFilter {
     }
 }
 
+use std::ffi::CString;
+
+#[repr(C)]
+pub struct FfiValue {
+    pub tag: u8, // discriminant: 0=i32, 1=u32, 2=i64, 3=u64, 4=f64, 5=bool, 6=str
+    pub data: FfiValueData,
+}
+
+#[repr(C)]
+pub union FfiValueData {
+    pub i32_val: i32,
+    pub u32_val: u32,
+    pub i64_val: i64,
+    pub u64_val: u64,
+    pub f64_val: f64,
+    pub bool_val: bool,
+    pub str_ptr: *const c_char,
+}
+
+use std::fmt;
+
+impl fmt::Debug for FfiValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        unsafe {
+            match self.tag {
+                0 => write!(
+                    f,
+                    "FfiValue {{ tag: 0 (i32), data: {} }}",
+                    self.data.i32_val
+                ),
+                1 => write!(
+                    f,
+                    "FfiValue {{ tag: 1 (u32), data: {} }}",
+                    self.data.u32_val
+                ),
+                2 => write!(
+                    f,
+                    "FfiValue {{ tag: 2 (i64), data: {} }}",
+                    self.data.i64_val
+                ),
+                3 => write!(
+                    f,
+                    "FfiValue {{ tag: 3 (u64), data: {} }}",
+                    self.data.u64_val
+                ),
+                4 => write!(
+                    f,
+                    "FfiValue {{ tag: 4 (f64), data: {} }}",
+                    self.data.f64_val
+                ),
+                5 => write!(
+                    f,
+                    "FfiValue {{ tag: 5 (bool), data: {} }}",
+                    self.data.bool_val
+                ),
+                6 => write!(
+                    f,
+                    "FfiValue {{ tag: 6 (str_ptr), data: {:?} }}",
+                    self.data.str_ptr
+                ),
+                _ => write!(f, "FfiValue {{ tag: {}, data: <unknown> }}", self.tag),
+            }
+        }
+    }
+}
+
+impl FfiValue {
+    pub fn from_i32(v: i32) -> Self {
+        Self {
+            tag: 0,
+            data: FfiValueData { i32_val: v },
+        }
+    }
+    pub fn from_u32(v: u32) -> Self {
+        Self {
+            tag: 1,
+            data: FfiValueData { u32_val: v },
+        }
+    }
+    pub fn from_i64(v: i64) -> Self {
+        Self {
+            tag: 2,
+            data: FfiValueData { i64_val: v },
+        }
+    }
+    pub fn from_u64(v: u64) -> Self {
+        Self {
+            tag: 3,
+            data: FfiValueData { u64_val: v },
+        }
+    }
+    pub fn from_f64(v: f64) -> Self {
+        Self {
+            tag: 4,
+            data: FfiValueData { f64_val: v },
+        }
+    }
+    pub fn from_bool(v: bool) -> Self {
+        Self {
+            tag: 5,
+            data: FfiValueData { bool_val: v },
+        }
+    }
+    pub fn from_str(s: &str) -> Self {
+        let cstr = CString::new(s).unwrap();
+        let ptr = cstr.into_raw(); // hand ownership to C++
+        Self {
+            tag: 6,
+            data: FfiValueData { str_ptr: ptr },
+        }
+    }
+}
+
 extern "C" {
 
     pub(crate) fn mw_log_create_logger(context: *const c_char) -> *const Logger;
-    pub(crate) fn mw_log_error_logger(logger: *const Logger, message: *const c_char, len: u32);
-    pub(crate) fn mw_log_warn_logger(logger: *const Logger, message: *const c_char, len: u32);
-    pub(crate) fn mw_log_info_logger(logger: *const Logger, message: *const c_char, len: u32);
-    pub(crate) fn mw_log_debug_logger(logger: *const Logger, message: *const c_char, len: u32);
-    pub(crate) fn mw_log_verbose_logger(logger: *const Logger, message: *const c_char, len: u32);
 
     fn mw_log_is_log_level_enabled_internal(logger: *const Logger, level: u8) -> bool;
     fn mw_log_logger_level_internal(logger: *const Logger) -> u8;
 
+    pub(crate) fn mw_log_send_record(
+        logger: *const Logger,
+        level: u8,
+        values: *const FfiValue,
+        len: u32,
+    );
 }
+
+use crate::types::LogValue;

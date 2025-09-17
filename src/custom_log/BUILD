@@ -12,26 +12,17 @@
 # *******************************************************************************
 
 load("@rules_rust//cargo:defs.bzl", "cargo_build_script")
-load("@rules_rust//rust:defs.bzl", "rust_library")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
 
-cc_library(
-    name = "libmw_log_ffi",
-    srcs = ["src/mw_log_ffi.cpp"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "@score-baselibs//score/mw/log",
-    ],
-)
 
 rust_library(
-    name = "mw_log_subscriber",
+    name = "custom_log",
     srcs = glob(["src/**/*.rs"]),
-    crate_name = "mw_log_subscriber",
+    crate_name = "custom_log",
     edition = "2021",
     visibility = ["//visibility:public"],
     deps = [
-        ":libmw_log_ffi",
+        "//src/mw_log_subscriber",
         "//src/mw_log",
-
     ],
 )

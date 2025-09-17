@@ -16,6 +16,15 @@ load("@score_docs_as_code//:docs.bzl", "docs")
 load("@score_format_checker//:macros.bzl", "use_format_targets")
 load("@score_starpls_lsp//:starpls.bzl", "setup_starpls")
 load("//:project_config.bzl", "PROJECT_CONFIG")
+bazel_dep(name = "rules_rust", version = "0.49.0")
+
+# Add once_cell as a dependency
+rust_crate_universe(
+    name = "crate_index",
+    crates = {
+        "once_cell": "1.19.0",
+    },
+)
 
 setup_starpls(
     name = "starpls_server",

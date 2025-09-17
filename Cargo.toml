@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "src/mw_log",
-    "src/mw_log_subscriber"
+    "src/mw_log_subscriber",
+    "src/custom_log"
 ]
 resolver = "2"
 
@@ -11,4 +12,5 @@ edition = "2021"
 
 [workspace.dependencies]
 mw_log = { path = "src/mw_log", features = ["std"] }
+mw_log_subscriber = { path = "src/mw_log_subscriber"}
 cc = "1.2.26"

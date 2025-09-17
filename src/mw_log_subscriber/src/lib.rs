@@ -11,9 +11,11 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-mod mw_log_ffi;
+pub mod mw_log_ffi;
+pub mod types;
 
 use crate::mw_log_ffi::*;
+use crate::types::{LogRecord, LogValue};
 
 use core::ffi::c_char;
 use core::fmt::{self, Write};
@@ -137,6 +139,10 @@ impl<const BUF_SIZE: usize> Write for BufWriter<BUF_SIZE> {
     }
 }
 
+use crate::mw_log_ffi::{mw_log_send_record, FfiValue};
+use std::sync::Mutex;
+
+#[derive(Debug)]
 pub struct MwLogger {
     ptr: *const Logger,
     log_fn: fn(&mut BufWriter<MSG_SIZE>, &Record),
@@ -148,17 +154,101 @@ unsafe impl Send for MwLogger {}
 // SAFETY: The underlying C++ logger is assumed to be thread-safe.
 unsafe impl Sync for MwLogger {}
 
-impl MwLogger {
-    fn write_log(&self, level: Level, msg: &BufWriter<MSG_SIZE>) {
-        let slice = msg.as_c_str();
+use std::sync::OnceLock;
 
+static GLOBAL_LOGGER: OnceLock<Mutex<MwLogger>> = OnceLock::new();
+
+impl MwLogger {
+    pub fn set_global(self) {
+        GLOBAL_LOGGER
+            .set(Mutex::new(self))
+            .expect("Global logger already initialized");
+    }
+
+    pub fn global() -> std::sync::MutexGuard<'static, MwLogger> {
+        GLOBAL_LOGGER
+            .get()
+            .expect("Global logger not initialized")
+            .lock()
+            .expect("Poisoned global logger mutex")
+    }
+
+    pub fn send_record(&self, level: u8, values: Vec<LogValue>) {
+        // Prepare ffi_values and a list of allocated CString pointers for cleanup
+        let mut ffi_values: Vec<FfiValue> = Vec::with_capacity(values.len());
+        let mut owned_cstrings: Vec<*mut c_char> = Vec::new();
+
+        for v in values {
+            match v {
+                LogValue::I32(x) => {
+                    ffi_values.push(FfiValue {
+                        tag: 0,
+                        data: FfiValueData { i32_val: x },
+                    });
+                }
+                LogValue::U32(x) => {
+                    ffi_values.push(FfiValue {
+                        tag: 1,
+                        data: FfiValueData { u32_val: x },
+                    });
+                }
+                LogValue::I64(x) => {
+                    ffi_values.push(FfiValue {
+                        tag: 2,
+                        data: FfiValueData { i64_val: x },
+                    });
+                }
+                LogValue::U64(x) => {
+                    ffi_values.push(FfiValue {
+                        tag: 3,
+                        data: FfiValueData { u64_val: x },
+                    });
+                }
+                LogValue::F64(x) => {
+                    ffi_values.push(FfiValue {
+                        tag: 4,
+                        data: FfiValueData { f64_val: x },
+                    });
+                }
+                LogValue::Bool(b) => {
+                    let val: u32 = if b { 1 } else { 0 };
+                    ffi_values.push(FfiValue {
+                        tag: 5,
+                        data: FfiValueData { u32_val: val },
+                    });
+                }
+                LogValue::Str(s) => {
+                    let c = CString::new(s).expect("CString::new failed");
+                    let ptr = c.into_raw(); // leak to FFI temporarily
+                    owned_cstrings.push(ptr);
+
+                    ffi_values.push(FfiValue {
+                        tag: 6,
+                        data: FfiValueData { str_ptr: ptr },
+                    });
+                }
+            }
+        }
+        println!(
+            "Logging via FFI with level: {}, values: {} content {:?}",
+            level,
+            ffi_values.len(),
+            ffi_values
+        );
+        // Call into C++
         unsafe {
-            match level {
-                Level::Error => mw_log_error_logger(self.ptr, slice.as_ptr(), slice.len() as u32),
-                Level::Warn => mw_log_warn_logger(self.ptr, slice.as_ptr(), slice.len() as u32),
-                Level::Info => mw_log_info_logger(self.ptr, slice.as_ptr(), slice.len() as u32),
-                Level::Debug => mw_log_debug_logger(self.ptr, slice.as_ptr(), slice.len() as u32),
-                Level::Trace => mw_log_verbose_logger(self.ptr, slice.as_ptr(), slice.len() as u32),
+            mw_log_send_record(
+                self.ptr,
+                level,
+                ffi_values.as_ptr(),
+                ffi_values.len() as u32,
+            );
+        }
+
+        // Reclaim CString memory after C++ call
+        for raw in owned_cstrings {
+            unsafe {
+                let _ = CString::from_raw(raw);
             }
         }
     }
@@ -168,19 +258,15 @@ impl Log for MwLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
         mw_log_is_log_level_enabled(self.ptr, metadata.level())
     }
+
     fn log(&self, record: &Record) {
         if !self.enabled(record.metadata()) {
             return;
         }
-
-        let mut msg_writer = BufWriter::<MSG_SIZE>::new();
-        (self.log_fn)(&mut msg_writer, record);
-
-        self.write_log(record.level(), &msg_writer);
     }
 
     fn flush(&self) {
-        // No-op for this logger, as it does not buffer logs
+        // No-op
     }
 }
 
