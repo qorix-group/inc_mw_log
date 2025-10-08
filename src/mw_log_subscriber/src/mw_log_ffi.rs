@@ -54,6 +54,7 @@ fn log_level_from_ffi(level: u8) -> LevelFilter {
 extern "C" {
 
     pub(crate) fn mw_log_create_logger(context: *const c_char) -> *mut Logger;
+    pub(crate) fn mw_log_fatal_logger(logger: *const Logger, message: *const c_char, len: u32);
     pub(crate) fn mw_log_error_logger(logger: *const Logger, message: *const c_char, len: u32);
     pub(crate) fn mw_log_warn_logger(logger: *const Logger, message: *const c_char, len: u32);
     pub(crate) fn mw_log_info_logger(logger: *const Logger, message: *const c_char, len: u32);

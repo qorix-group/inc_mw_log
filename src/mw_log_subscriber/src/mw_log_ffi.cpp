@@ -30,7 +30,7 @@ namespace score::mw::log
         {
             return logger->IsLogEnabled(GetLogLevelFromU8(level));
         }
-
+        
         void mw_log_fatal_logger(const Logger *logger, const char *message, uint32_t size)
         {
             logger->LogFatal() << LogString{message, size};

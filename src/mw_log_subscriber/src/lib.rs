@@ -156,11 +156,14 @@ unsafe impl Send for MwLogger {}
 unsafe impl Sync for MwLogger {}
 
 impl MwLogger {
-    fn write_log(&self, level: Level, msg: &BufWriter<MSG_SIZE>) {
+    fn write_log(&self, level: Level, msg: &BufWriter<MSG_SIZE>, target: &str) {
         let slice = msg.as_slice();
 
         unsafe {
-            match level {
+            if target == "fatal" {
+                mw_log_fatal_logger(self.ptr, slice.as_ptr(), slice.len() as u32);
+            } else {
+                    match level {
                 Level::Error => mw_log_error_logger(self.ptr, slice.as_ptr(), slice.len() as u32),
                 Level::Warn => mw_log_warn_logger(self.ptr, slice.as_ptr(), slice.len() as u32),
                 Level::Info => mw_log_info_logger(self.ptr, slice.as_ptr(), slice.len() as u32),
@@ -170,22 +173,24 @@ impl MwLogger {
         }
     }
 }
+}
 
 impl Log for MwLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
         mw_log_is_log_level_enabled(self.ptr, metadata.level())
     }
+
     fn log(&self, record: &Record) {
         if !self.enabled(record.metadata()) {
             return;
         }
 
-        let mut msg_writer = BufWriter::<MSG_SIZE>::new();
-        (self.log_fn)(&mut msg_writer, record);
+            let mut msg_writer = BufWriter::<MSG_SIZE>::new();
+            (self.log_fn)(&mut msg_writer, record);
 
-        self.write_log(record.level(), &msg_writer);
+            self.write_log(record.level(), &msg_writer, record.target());
     }
-
+    
     fn flush(&self) {
         // No-op for this logger, as it does not buffer logs
     }

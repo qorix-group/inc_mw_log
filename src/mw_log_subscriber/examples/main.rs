@@ -35,6 +35,7 @@ fn main() {
     error!("This is an error log");
     info!("This is an info log");
     warn!("This is a warn log");
+    error!(target: "fatal", "This is a fatal log");
 
     error!(
         "This is an log that will be trimmed: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -71,4 +72,5 @@ fn main() {
     error!(logger : logger, "This is an error log");
     info!(logger : logger, "This is an info log");
     warn!(logger : logger, "This is a warn log");
+    error!(logger : logger, target: "fatal", "This is a fatal log");
 }

@@ -3,5 +3,5 @@
     "appDesc": "JSON example programs",
     "logMode" : "kConsole",
     "logLevel": "kVerbose",
-    "logLevelThresholdConsole": "kInfo"
+    "logLevelThresholdConsole": "kVerbose"
 }
