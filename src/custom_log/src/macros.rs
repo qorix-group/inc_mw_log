@@ -45,9 +45,7 @@ macro_rules! log_debug {
 #[macro_export]
 macro_rules! log_record {
     ($level:expr, $values:expr) => {{
-        // $crate::MwLogger::send_record($level, $values);
         let mut logger = mw_log_subscriber::MwLogger::global();
         logger.send_record($level, $values);
-        //$crate::MwLogger::global().send_record($level, $values);
     }};
 }

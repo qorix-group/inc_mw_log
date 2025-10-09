@@ -12,7 +12,6 @@
 //
 
 use std::path::PathBuf;
-
 use custom_log::{log_debug, log_info};
 use mw_log_subscriber::MwLoggerBuilder;
 
@@ -33,13 +32,21 @@ fn main() {
 
     // Just initialize and set as default logger
    // MwLoggerBuilder::new().set_as_default_logger::<false, true, false>();
-log_info!(32);
+log_info!("Test",32,"Does it work ??", 65.4);
    // trace!("This is a trace log");
 //     debug!("This is a debug log");
 //   //  error!("This is an error log");
 //     info!("This is an info log");
    // warn!("This is a warn log");
 
+   log_info!("This is an log that will be trimmed: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+    ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+    eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+    fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+    END MARKER NOT VISIBLE");
     // error!(
     //     "This is an log that will be trimmed: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     // bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -50,7 +57,14 @@ log_info!(32);
     // ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
     // END MARKER NOT VISIBLE"
     // );
-
+log_info!("This is an log that will be trimmed {} {} {} {} {} {} {}. END MARKER NOT VISIBLE",
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg");
     // error!(
     //     "This is an log that will be trimmed {} {} {} {} {} {} {}. END MARKER NOT VISIBLE",
     // "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -63,14 +77,14 @@ log_info!(32);
     // );
 
     // Using logger instance with context
-    let logger = MwLoggerBuilder::new()
-        .context("ALFA")
-        .build::<false, true, false>();
+    // let logger = MwLoggerBuilder::new()
+    //     .context("ALFA")
+    //     .build::<false, true, false>();
 
     // trace!(
-    // //     logger : logger,
-    // //     "This is a trace log"
-    // // );
+    //     logger : logger,
+    //     "This is a trace log"
+    // );
     // debug!(logger : logger, "This is a debug log");
     // // error!(logger : logger, "This is an error log");
     // info!(logger : logger, "This is an info log");

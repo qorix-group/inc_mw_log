@@ -12,17 +12,14 @@
 //
 
 use core::ffi::{c_char, c_uchar, c_uint};
-
 use mw_log::{Level, LevelFilter};
+use std::ffi::CString;
+use std::fmt;
 
 // Opaque type representing the C++ logger ptr
 #[repr(C)]
 pub(crate) struct Logger {
     _private: [u8; 0], // Opaque
-}
-#[repr(C)]
-pub struct LogStreamHandle {
-    _private: [u8; 0],
 }
 
 pub(crate) fn mw_log_logger_level(logger: *const Logger) -> LevelFilter {
@@ -55,8 +52,6 @@ fn log_level_from_ffi(level: u8) -> LevelFilter {
     }
 }
 
-use std::ffi::CString;
-
 #[repr(C)]
 pub struct FfiValue {
     pub tag: u8, // discriminant: 0=i32, 1=u32, 2=i64, 3=u64, 4=f64, 5=bool, 6=str
@@ -73,8 +68,6 @@ pub union FfiValueData {
     pub bool_val: bool,
     pub str_ptr: *const c_char,
 }
-
-use std::fmt;
 
 impl fmt::Debug for FfiValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -171,7 +164,6 @@ impl FfiValue {
 extern "C" {
 
     pub(crate) fn mw_log_create_logger(context: *const c_char) -> *const Logger;
-
     fn mw_log_is_log_level_enabled_internal(logger: *const Logger, level: u8) -> bool;
     fn mw_log_logger_level_internal(logger: *const Logger) -> u8;
 
@@ -182,5 +174,3 @@ extern "C" {
         len: u32,
     );
 }
-
-use crate::types::LogValue;

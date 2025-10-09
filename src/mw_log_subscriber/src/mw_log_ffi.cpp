@@ -11,8 +11,8 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
-#include "score/mw/log/configuration/configuration.h"
-#include "score/mw/log/log_level.h"
+// #include "score/mw/log/configuration/configuration.h"
+// #include "score/mw/log/log_level.h"
 #include "score/mw/log/logger.h"
 #include "score/mw/log/logging.h"
 

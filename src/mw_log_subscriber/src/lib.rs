@@ -175,6 +175,7 @@ impl MwLogger {
 
     pub fn send_record(&self, level: u8, values: Vec<LogValue>) {
         // Prepare ffi_values and a list of allocated CString pointers for cleanup
+        // every log call allocates a fresh buffer, then frees it after the FFI call.
         let mut ffi_values: Vec<FfiValue> = Vec::with_capacity(values.len());
         let mut owned_cstrings: Vec<*mut c_char> = Vec::new();
 
