@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "src/mw_log",
+    "src/mw_log_subscriber"
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+mw_log = { path = "src/mw_log", features = ["std"] }
+cc = "1.2.26"

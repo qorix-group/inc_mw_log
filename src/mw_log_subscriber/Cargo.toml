@@ -1,0 +1,12 @@
+[package]
+name = "mw_log_subscriber"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+mw_log.workspace = true
+
+[build-dependencies]
+cc.workspace = true
+
+# TODO: make baselib work with Cargo so this module can be used in cargo
